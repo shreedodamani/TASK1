@@ -1,0 +1,15 @@
+{
+  "name": "email-service",
+  "version": "1.0.0",
+  "description": "Serverless Email Notification Service for Mini HMS",
+  "main": "handler.py",
+  "scripts": {
+    "start": "serverless offline"
+  },
+  "devDependencies": {
+    "serverless": "^3.38.0",
+    "serverless-offline": "^13.3.3"
+  },
+  "author": "shreedodamani",
+  "license": "ISC"
+}

@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block title %}Welcome - Mini HMS{% endblock %}
+
+{% block content %}
+<div class="landing-hero">
+    <h1>Manage Doctor Availability & Book <span>Appointments Instantly</span></h1>
+    <p>A streamlined, fast, and local platform for doctors to set their schedules and patients to book slots with double-booking prevention.</p>
+    
+    <div class="landing-actions">
+        <a href="{% url 'signup' %}" class="btn btn-primary">Get Started Now</a>
+        <a href="{% url 'login' %}" class="btn btn-secondary">Access Account</a>
+    </div>
+</div>
+
+<div class="features-grid">
+    <div class="feature-card">
+        <div class="feature-icon">🗓️</div>
+        <h3>Doctor Schedules</h3>
+        <p>Doctors can quickly set dates and time blocks when they are available for patient consultations.</p>
+    </div>
+    
+    <div class="feature-card">
+        <div class="feature-icon">🛡️</div>
+        <h3>Race Condition Protection</h3>
+        <p>Our database transaction locks prevent double bookings. If two patients click a slot simultaneously, only one succeeds.</p>
+    </div>
+    
+    <div class="feature-card">
+        <div class="feature-icon">📅</div>
+        <h3>Google Calendar Sync</h3>
+        <p>Automatically syncs confirmed bookings to both the doctor's and the patient's Google Calendars using OAuth2.</p>
+    </div>
+    
+    <div class="feature-card">
+        <div class="feature-icon">📧</div>
+        <h3>Serverless Notifications</h3>
+        <p>Integrates with a Python serverless function locally to trigger instant sign up welcome and booking confirmation emails.</p>
+    </div>
+</div>
+{% endblock %}

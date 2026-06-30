@@ -1,0 +1,222 @@
+{% extends 'base.html' %}
+
+{% block title %}Patient Dashboard - Mini HMS{% endblock %}
+
+{% block content %}
+<!-- Patient Profile Card -->
+<div class="patient-profile-card" style="background: linear-gradient(135deg, var(--color-bg-surface), var(--color-bg-surface-elevated)); border: 1px solid var(--color-border); border-radius: var(--border-radius-lg); padding: 1.5rem 2rem; margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow-md); flex-wrap: wrap; gap: 1.5rem;">
+    <div style="display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;">
+        <div style="width: 60px; height: 60px; border-radius: 50%; background: var(--color-primary-glow); display: flex; align-items: center; justify-content: center; font-size: 1.8rem; border: 1px solid var(--color-primary);">
+            👤
+        </div>
+        <div>
+            <h1 style="font-size: 1.8rem; margin: 0; font-family: var(--font-heading); color: var(--color-text-primary);">{{ user.get_full_name|default:user.username }}</h1>
+            <p style="color: var(--color-text-secondary); margin: 0.25rem 0 0; font-size: 0.95rem; display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                <span>Patient Profile</span>
+                <span style="color: var(--color-border);">|</span>
+                <span><strong>Age:</strong> {{ user.age|default:"N/A" }}</span>
+                <span style="color: var(--color-border);">|</span>
+                <span><strong>Gender:</strong> {{ user.gender|default:"N/A" }}</span>
+            </p>
+        </div>
+    </div>
+    <div style="text-align: right; min-width: 120px;">
+        <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--color-text-muted); letter-spacing: 0.05em; margin-bottom: 0.25rem;">Total Visits</div>
+        <div style="font-size: 2.5rem; font-weight: 800; color: var(--color-accent); font-family: var(--font-heading); line-height: 1;">
+            {{ visits_count }}
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-grid">
+    <!-- Main Left Column: Available Slots and Booking History -->
+    <div class="main-column">
+        <!-- Book an Appointment Section -->
+        <div class="dashboard-card" style="margin-bottom: 2rem;">
+            <div class="dashboard-card-header" style="flex-wrap: wrap; gap: 1rem;">
+                <h2>Book an Appointment</h2>
+                
+                <!-- Filter by Doctor & Date -->
+                <form method="GET" action="{% url 'patient_dashboard' %}" class="directory-filters" style="margin: 0; display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center;">
+                    <select name="doctor_id" class="form-control form-control-sm" style="width: auto; height: 38px; min-width: 160px; background-color: var(--color-bg-base);" onchange="this.form.submit()">
+                        <option value="">All Doctors</option>
+                        {% for doc in doctors %}
+                            <option value="{{ doc.id }}" {% if selected_doctor == doc.id|stringformat:"s" %}selected{% endif %}>
+                                Dr. {{ doc.get_full_name|default:doc.username }}
+                            </option>
+                        {% endfor %}
+                    </select>
+
+                    <input type="date" name="date" class="form-control form-control-sm" style="width: auto; height: 38px; background-color: var(--color-bg-base);" min="{{ now|date:'Y-m-d' }}" value="{{ selected_date }}" onchange="this.form.submit()" title="Filter by appointment date">
+
+                    {% if selected_doctor or selected_date %}
+                        <a href="{% url 'patient_dashboard' %}" class="btn btn-secondary btn-sm" style="height: 38px; display: inline-flex; align-items: center; padding: 0 0.75rem;">Clear</a>
+                    {% endif %}
+                </form>
+            </div>
+            
+            <div class="slots-list">
+                {% if available_slots %}
+                    {% for slot in available_slots %}
+                        <div class="slot-item" style="display: flex; flex-direction: column; align-items: stretch; gap: 0.75rem; background-color: var(--color-bg-surface-elevated); padding: 1.25rem; border: 1px solid var(--color-border); border-radius: var(--border-radius-md);">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.5rem;">
+                                <div>
+                                    <h4 style="color: var(--color-primary); font-size: 1.1rem; margin-bottom: 0.15rem;">Dr. {{ slot.doctor.get_full_name|default:slot.doctor.username }}</h4>
+                                    {% if slot.doctor.specialty %}
+                                        <div style="font-size: 0.8rem; font-weight: 600; color: var(--color-accent); margin-bottom: 0.25rem;">
+                                            🩺 {{ slot.doctor.specialty }}
+                                            {% if slot.doctor.specialty == 'Cardiology' %}
+                                                <span style="color: var(--color-text-secondary); font-weight: normal; font-size: 0.75rem;">(Heart diseases, chest pain, hypertension)</span>
+                                            {% elif slot.doctor.specialty == 'Dermatology' %}
+                                                <span style="color: var(--color-text-secondary); font-weight: normal; font-size: 0.75rem;">(Skin rashes, acne, eczema, allergies)</span>
+                                            {% elif slot.doctor.specialty == 'Pediatrics' %}
+                                                <span style="color: var(--color-text-secondary); font-weight: normal; font-size: 0.75rem;">(Child care, vaccines, pediatric fever)</span>
+                                            {% elif slot.doctor.specialty == 'General Medicine' %}
+                                                <span style="color: var(--color-text-secondary); font-weight: normal; font-size: 0.75rem;">(Cold, flu, infections, general health)</span>
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="item-time" style="font-size: 0.85rem; color: var(--color-text-secondary); display: flex; align-items: center; gap: 0.35rem;">
+                                    <span>🕒</span>
+                                    <span>{{ slot.start_time|date:"l, F j, H:i" }} - {{ slot.end_time|date:"H:i" }}</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Booking Form with Symptoms -->
+                            <form method="POST" action="{% url 'book_slot' slot.id %}" style="display: flex; flex-direction: column; gap: 0.5rem; align-items: stretch; width: 100%; border-top: 1px solid var(--color-border); padding-top: 0.75rem; margin-top: 0.25rem;">
+                                {% csrf_token %}
+                                <div style="display: flex; gap: 0.5rem; width: 100%; flex-wrap: wrap;">
+                                    <input type="text" name="disease_description" placeholder="Describe symptoms or disease (e.g. Cough, Fever, Checkup) *" required class="form-control form-control-sm" style="flex: 1; height: 38px; font-size: 0.85rem; min-width: 200px;">
+                                    <button type="submit" class="btn btn-primary btn-sm" style="height: 38px; font-weight: 600; padding: 0 1.25rem;">Book Slot</button>
+                                </div>
+                            </form>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <div class="empty-icon">🔍</div>
+                        <p>No available slots found. Try changing your filters or check back later.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- My Bookings & Medical History Section -->
+        <div class="dashboard-card">
+            <div class="dashboard-card-header">
+                <h2>My Bookings & History</h2>
+            </div>
+            
+            <div class="booking-list" style="display: flex; flex-direction: column; gap: 1.25rem;">
+                {% if bookings %}
+                    {% for booking in bookings %}
+                        <div class="booking-item" style="display: flex; flex-direction: column; align-items: stretch; gap: 0.75rem; background-color: var(--color-bg-surface-elevated); border: 1px solid var(--color-border); border-radius: var(--border-radius-md); padding: 1.25rem; transition: var(--transition-smooth);">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap;">
+                                <div>
+                                    <h4 style="margin: 0; color: var(--color-primary); font-size: 1.1rem;">
+                                        Dr. {{ booking.doctor.get_full_name|default:booking.doctor.username }}
+                                    </h4>
+                                    {% if booking.doctor.specialty %}
+                                        <div style="font-size: 0.75rem; color: var(--color-accent); font-weight: 600; margin-top: 0.1rem;">🩺 {{ booking.doctor.specialty }}</div>
+                                    {% endif %}
+                                    <div class="item-time" style="margin-top: 0.4rem; font-size: 0.85rem; color: var(--color-text-secondary); display: flex; align-items: center; gap: 0.35rem;">
+                                        🕒 {{ booking.slot.start_time|date:"l, F j, Y, H:i" }} - {{ booking.slot.end_time|date:"H:i" }}
+                                    </div>
+                                </div>
+                                
+                                <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 0.35rem;">
+                                    {% if booking.status == 'PENDING' %}
+                                        <span class="badge badge-warning" style="font-size: 0.72rem; padding: 0.3rem 0.6rem; border-radius: 20px; font-weight: 600;">Awaiting Approval</span>
+                                    {% elif booking.status == 'CONFIRMED' %}
+                                        <span class="badge badge-success" style="font-size: 0.72rem; padding: 0.3rem 0.6rem; border-radius: 20px; background-color: var(--color-accent-glow); color: var(--color-accent); font-weight: 600;">Confirmed</span>
+                                    {% elif booking.status == 'REJECTED' %}
+                                        <span class="badge" style="font-size: 0.72rem; padding: 0.3rem 0.6rem; border-radius: 20px; background-color: rgba(244, 63, 94, 0.15); color: var(--color-danger); font-weight: 600;">Rejected</span>
+                                    {% elif booking.status == 'CANCELLED' %}
+                                        <span class="badge" style="font-size: 0.72rem; padding: 0.3rem 0.6rem; border-radius: 20px; background-color: rgba(100, 116, 139, 0.15); color: var(--color-text-muted); font-weight: 600;">Cancelled</span>
+                                    {% endif %}
+                                    
+                                    {% if booking.google_calendar_patient_event_id %}
+                                        <span style="font-size: 0.72rem; color: var(--color-accent); display: inline-flex; align-items: center; gap: 0.2rem;">
+                                            📅 Google Synced
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <hr style="border: 0; border-top: 1px solid var(--color-border); margin: 0.25rem 0;">
+                            
+                            <div style="display: grid; grid-template-columns: 1fr; gap: 0.75rem; font-size: 0.9rem;">
+                                <div>
+                                    <span style="font-weight: 600; color: var(--color-text-secondary); display: block; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.15rem;">Your Symptoms / Disease</span>
+                                    <span style="color: var(--color-text-primary); font-style: italic;">"{{ booking.disease_description|default:'No symptoms described.' }}"</span>
+                                </div>
+                                
+                                {% if booking.status == 'CONFIRMED' or booking.prescription or booking.patient_status %}
+                                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; padding: 0.75rem; background-color: rgba(255, 255, 255, 0.02); border: 1px solid var(--color-border); border-radius: var(--border-radius-sm); margin-top: 0.25rem;">
+                                        <div>
+                                            <span style="font-weight: 600; color: var(--color-accent); display: block; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">🩺 Doctor's Prescription</span>
+                                            <p style="color: var(--color-text-primary); font-weight: 500; white-space: pre-line; margin: 0; font-size: 0.88rem;">
+                                                {% if booking.prescription %}{{ booking.prescription }}{% else %}<span style="color: var(--color-text-muted); font-style: italic;">No prescription written yet.</span>{% endif %}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <span style="font-weight: 600; color: var(--color-primary); display: block; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">📋 Diagnosis / Health Status</span>
+                                            <p style="color: var(--color-text-primary); font-weight: 500; margin: 0; font-size: 0.88rem;">
+                                                {% if booking.patient_status %}{{ booking.patient_status }}{% else %}<span style="color: var(--color-text-muted); font-style: italic;">No diagnosis status updated yet.</span>{% endif %}
+                                            </p>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <div class="empty-icon">🏥</div>
+                        <p>You haven't booked any appointments yet.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sidebar Right Column: Google Sync & Info -->
+    <div class="sidebar-column">
+        <!-- Google Calendar Integration -->
+        <div class="dashboard-card">
+            <div class="dashboard-card-header">
+                <h2>Google Calendar</h2>
+            </div>
+            
+            {% if is_connected %}
+                <div class="calendar-integration-box connected">
+                    <div class="calendar-icon">📅</div>
+                    <div class="calendar-status" style="color: var(--color-accent);">Sync Connected</div>
+                    <div class="calendar-desc">Your approved appointments will automatically sync with your Google Calendar.</div>
+                    <a href="{% url 'google_disconnect' %}" class="btn btn-danger btn-sm" style="width: 100%;">Disconnect Calendar</a>
+                </div>
+            {% else %}
+                <div class="calendar-integration-box">
+                    <div class="calendar-icon">📅</div>
+                    <div class="calendar-status" style="color: var(--color-text-secondary);">Not Connected</div>
+                    <div class="calendar-desc">Sync your appointments to Google Calendar. Connect in Mock Mode instantly.</div>
+                    <a href="{% url 'google_connect' %}" class="btn btn-primary btn-sm" style="width: 100%;">Connect Google Calendar</a>
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Helpful Information Card -->
+        <div class="dashboard-card" style="background: rgba(14, 165, 233, 0.02);">
+            <div class="dashboard-card-header">
+                <h2>Information</h2>
+            </div>
+            <div style="font-size: 0.88rem; color: var(--color-text-secondary); display: flex; flex-direction: column; gap: 1rem;">
+                <p>💡 <b>Booking Approvals:</b> Bookings are initially sent as a request to the doctor. Once the doctor reviews and approves, they will prescribe treatment and update your health status.</p>
+                <p>✉️ <b>Email Alerts:</b> You will receive email notifications on booking request submission, doctor acceptance (confirmation), rejection, and cancellations.</p>
+                <p>⏰ <b>1-Hour Reminders:</b> Both you and the doctor will receive reminder emails exactly 1 hour before the scheduled time slot.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

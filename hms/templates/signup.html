@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block title %}Sign Up - Mini HMS{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <h2>Create Account</h2>
+        <p class="subtitle">Join MiniHMS to manage schedules or book appointments.</p>
+        
+        <form method="POST" action="{% url 'signup' %}">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="username">Username *</label>
+                <input type="text" id="username" name="username" class="form-control" placeholder="Choose a username" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email Address *</label>
+                <input type="email" id="email" name="email" class="form-control" placeholder="Enter your email" required>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="first_name">First Name</label>
+                    <input type="text" id="first_name" name="first_name" class="form-control" placeholder="First Name">
+                </div>
+                <div class="form-group">
+                    <label for="last_name">Last Name</label>
+                    <input type="text" id="last_name" name="last_name" class="form-control" placeholder="Last Name">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="role">Select Your Role *</label>
+                <select id="role" name="role" class="form-control" required>
+                    <option value="PATIENT" selected>Patient (I want to book appointments)</option>
+                    <option value="DOCTOR">Doctor (I want to set availability)</option>
+                </select>
+            </div>
+
+            <!-- Patient Profile Details -->
+            <div id="patient-fields" class="form-row">
+                <div class="form-group">
+                    <label for="age">Age</label>
+                    <input type="number" id="age" name="age" class="form-control" placeholder="Age" min="1" max="120">
+                </div>
+                <div class="form-group">
+                    <label for="gender">Gender</label>
+                    <select id="gender" name="gender" class="form-control">
+                        <option value="">Select Gender</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password *</label>
+                <input type="password" id="password" name="password" class="form-control" placeholder="Create a password" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="confirm_password">Confirm Password *</label>
+                <input type="password" id="confirm_password" name="confirm_password" class="form-control" placeholder="Re-enter password" required>
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-submit">Sign Up</button>
+        </form>
+        
+        <div class="auth-footer">
+            Already have an account? <a href="{% url 'login' %}">Login here</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const roleSelect = document.getElementById('role');
+    const patientFields = document.getElementById('patient-fields');
+    
+    function togglePatientFields() {
+        if (roleSelect.value === 'PATIENT') {
+            patientFields.style.display = 'grid';
+        } else {
+            patientFields.style.display = 'none';
+        }
+    }
+    
+    roleSelect.addEventListener('change', togglePatientFields);
+    togglePatientFields();
+</script>
+{% endblock %}

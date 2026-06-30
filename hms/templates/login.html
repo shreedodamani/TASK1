@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}Login - Mini HMS{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <h2>Welcome Back</h2>
+        <p class="subtitle">Access your personal HMS dashboard.</p>
+        
+        <form method="POST" action="{% url 'login' %}">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="username">Username or Email *</label>
+                <input type="text" id="username" name="username" class="form-control" placeholder="Enter username or email" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password *</label>
+                <input type="password" id="password" name="password" class="form-control" placeholder="Enter password" required>
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-submit">Login</button>
+        </form>
+        
+        <div class="auth-footer">
+            Don't have an account? <a href="{% url 'signup' %}">Sign up here</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
